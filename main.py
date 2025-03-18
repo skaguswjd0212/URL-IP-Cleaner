@@ -7,11 +7,6 @@ from bs4 import BeautifulSoup
 import re
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
-
-# Ensure the upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/')
 def index():
@@ -20,12 +15,11 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     result = ''
+    
     if 'file' in request.files and request.files['file'].filename != '':
         file = request.files['file']
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(filepath)
-        result = process_file(filepath)
-        os.remove(filepath) 
+        content = file.read().decode('utf-8')  
+        result = process_text(content) 
     elif 'content' in request.form and request.form['content'] != '':
         content = request.form['content']
         result = process_text(content)
@@ -34,16 +28,10 @@ def upload_file():
      
     return render_template('index.html', result=Markup(result))
 
-def process_file(filepath):
-    with open(filepath, 'r') as f:
-        content = f.read()
-    return process_text(content)
-
 def process_text(text):
     # URL, IP 추출하여 텍스트로 변환
     lines = text.split('\n')
     processed_lines = [process_line(line) for line in lines]
-    
     # 테이블 태그가 포함되어 있더라도 무시하고, 순수 텍스트만 출력
     return '\n'.join(filter(None, processed_lines))  
 
