@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, redirect, session, url_for, render_template
 from markupsafe import Markup
 import os
 from threading import Timer
@@ -7,9 +7,11 @@ from bs4 import BeautifulSoup
 import re
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
 @app.route('/')
 def index():
+    session.pop('result', None)
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
@@ -26,14 +28,40 @@ def upload_file():
     else:
         return 'No file or text provided'
      
+    session['result'] = result  
+    return redirect(url_for('result'))
+
+@app.route('/result')
+def result():
+    result = session.get('result', '') 
     return render_template('index.html', result=Markup(result))
 
 def process_text(text):
-    # URL, IP 추출하여 텍스트로 변환
+    if "<table" in text:
+        return convert_table_to_text(text)
+
     lines = text.split('\n')
     processed_lines = [process_line(line) for line in lines]
-    # 테이블 태그가 포함되어 있더라도 무시하고, 순수 텍스트만 출력
-    return '\n'.join(filter(None, processed_lines))  
+    processed_text = '<br>'.join(processed_lines)
+    return processed_text
+
+def convert_table_to_text(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    table = soup.find('table')
+    
+    if not table:
+        return "No table found."
+    
+    rows = []
+    for row in table.find_all('tr'):
+        cols = []
+        for cell in row.find_all(['td', 'th']):
+            cell_text = cell.get_text(strip=True)
+            processed_text = process_line(cell_text)
+            cols.append(processed_text)
+        rows.append("<br>".join(cols))
+    
+    return "<br>".join(rows)
 
 
 def process_line(line):
@@ -48,16 +76,16 @@ def process_line(line):
     line = re.sub(r'(\d+\.\d+\.\d+\.\d+):\d+', r'\1', line)
     line = re.sub(r'([a-zA-Z0-9.-]+):\d+', r'\1', line) 
 
-
     pattern = r"""
-        (?<![a-zA-Z0-9])https?://[^\s",]+|              # URL (http 또는 https) 
+        (?:(?:https?|ftp)://[^\s<>"']+)|              # URL (http 또는 https) 
         \b(?:\d{1,3}\.){2,3}\d{1,3}\b|                  # IPv4 
         \b(?:[0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}\b| # IPv6 
         \b(?:[a-zA-Z0-9-]+\.){2,}[a-zA-Z]{2,}\b         # 도메인 필터링
     """
     urls_and_ips = re.findall(pattern, line, re.VERBOSE)
+    unique_urls_and_ips = list(sorted(set(urls_and_ips)))
 
-    return '\n'.join(urls_and_ips) if urls_and_ips else ''
+    return '<br>'.join(unique_urls_and_ips) if unique_urls_and_ips else ''
 
 if __name__ == '__main__':
     app.run()
