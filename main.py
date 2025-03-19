@@ -47,22 +47,20 @@ def process_text(text):
 
 def convert_table_to_text(html):
     soup = BeautifulSoup(html, 'html.parser')
-    table = soup.find('table')
+    tables = soup.find_all('table')
     
-    if not table:
+    if not tables:
         return "No table found."
     
-    rows = []
-    for row in table.find_all('tr'):
-        cols = []
-        for cell in row.find_all(['td', 'th']):
-            cell_text = cell.get_text(strip=True)
-            processed_text = process_line(cell_text)
-            cols.append(processed_text)
-        rows.append("<br>".join(cols))
+    all_tables_text = []
+    for table in tables:
+        rows = []
+        for row in table.find_all('tr'):
+            cols = [process_line(col.get_text(strip=True)) for col in row.find_all(['td', 'th'])]
+            rows.append(" | ".join(filter(None, cols)))  
+        all_tables_text.append("<br>".join(rows))
     
-    return "<br>".join(rows)
-
+    return "<br>".join(all_tables_text) 
 
 def process_line(line):
     # 비표준 프로토콜을 표준 프로토콜로 변환
