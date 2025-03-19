@@ -3,7 +3,7 @@
 A **Flask-based web application** that helps extract, clean, and format **Indicators of Compromise (IOCs)** such as URLs, IP addresses, and domains.  
 Built to streamline threat intelligence workflows by converting obfuscated indicators into a readable and actionable format.
 
-🔗 **Live Demo:** [url-ip-cleaner.vercel.app](#)
+🔗 **Live Demo:** [url-ip-cleaner.vercel.app](https://url-ip-cleaner.vercel.app/)
 
 ## ✨ Features
 
