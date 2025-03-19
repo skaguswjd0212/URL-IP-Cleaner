@@ -7,7 +7,7 @@ function submitContent() {
 function copyToClipboard() {
     const resultElement = document.getElementById('result');
     const range = document.createRange();
-    range.selectNode(resultElement);
+    range.selectNodeContents(resultElement);
     window.getSelection().removeAllRanges();
     window.getSelection().addRange(range);
     document.execCommand('copy');
