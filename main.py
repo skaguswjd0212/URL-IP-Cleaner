@@ -75,10 +75,10 @@ def process_line(line):
     line = re.sub(r'([a-zA-Z0-9.-]+):\d+', r'\1', line) 
 
     pattern = r"""
-        (?:(?:https?|ftp)://[^\s<>"']+)|              # URL (http 또는 https) 
+        (?:(?:https?|ftp)://[^\s<>"']+)|                # URL (http 또는 https) 
         \b(?:\d{1,3}\.){2,3}\d{1,3}\b|                  # IPv4 
         \b(?:[0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}\b| # IPv6 
-        \b(?:[a-zA-Z0-9-]+\.){2,}[a-zA-Z]{2,}\b         # 도메인 필터링
+        \b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b                # 도메인 필터링
     """
     urls_and_ips = re.findall(pattern, line, re.VERBOSE)
     unique_urls_and_ips = list(sorted(set(urls_and_ips)))
